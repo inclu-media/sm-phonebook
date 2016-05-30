@@ -53,6 +53,42 @@ class ListHandler(BaseHandler):
         return self.render_template("phonebook.html", params=params)
 
 
+class DeleteHandler(BaseHandler):
+    def post(self, m_id):
+        entry = PhoneBookEntry.get_by_id(int(m_id))
+        entry.key.delete()
+
+        entries = PhoneBookEntry.query().fetch()
+        params = {"entries": entries}
+
+        return self.render_template("phonebook.html", params=params)
+
+
+class EditHandler(BaseHandler):
+    def post(self, m_id):
+
+        entries = PhoneBookEntry.query().fetch()
+        params = {"entries": entries, "edit_id": int(m_id)}
+
+        return self.render_template("phonebook.html", params=params)
+
+
+class SaveHandler(BaseHandler):
+    def post(self, m_id):
+        entry = PhoneBookEntry.get_by_id(int(m_id))
+        entry.name = self.request.get("name")
+        entry.phone = self.request.get("phone")
+        entry.put()
+
+        entries = PhoneBookEntry.query().fetch()
+        params = {"entries": entries}
+
+        return self.render_template("phonebook.html", params=params)
+
+
 app = webapp2.WSGIApplication([
     webapp2.Route('/', ListHandler),
+    webapp2.Route('/<m_id:\d+>/del', DeleteHandler),
+    webapp2.Route('/<m_id:\d+>/edit', EditHandler),
+    webapp2.Route('/<m_id:\d+>/save', SaveHandler)
 ], debug=True)

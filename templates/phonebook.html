@@ -28,17 +28,32 @@
           </tr>
           {% for entry in entries %}
             <tr>
-              <td>{{ entry.name }}</td><td>{{ entry.phone }}</td>
-              <td>
-                <form style="display:inline-block;" method="post" action="/{{ entry.key.id() }}/edit">
-                    <button type="submit"><i class="glyphicon glyphicon-pencil"></i></button>
-                </form>
-                <form style="display:inline-block;" method="post" action="/{{ entry.key.id() }}/del">
-                    <button type="submit" name="del"><i class="glyphicon glyphicon-trash"></i></button>
-                </form>
-              </td>
+              {% if edit_id is defined and edit_id == entry.key.id() %}
+                <form style="display:inline-block;" method="post" action="/{{ entry.key.id() }}/save">
+                  <td>
+                      <input type="text" name="name" value="{{ entry.name }}">
+                  </td>
+                  <td>
+                      <input type="text" name="phone" value="{{ entry.phone }}">
+                  </td>
+                  <td>
+                      <button type="submit"><i class="glyphicon glyphicon-floppy-save"></i></button>
+                  </td>
+                 </form>
+              {% else %}
+                  <td>{{ entry.name }}</td><td>{{ entry.phone }}</td>
+                  <td>
+                    <form style="display:inline-block;" method="post" action="/{{ entry.key.id() }}/edit">
+                        <button type="submit"><i class="glyphicon glyphicon-pencil"></i></button>
+                    </form>
+                    <form style="display:inline-block;" method="post" action="/{{ entry.key.id() }}/del">
+                        <button type="submit" name="del"><i class="glyphicon glyphicon-trash"></i></button>
+                    </form>
+                  </td>
+              {% endif %}
             </tr>
           {% endfor %}
+          {% if edit_id is not defined %}
           <form class="inline-form" method="post" action="/">
               <tr>
                 <td>
@@ -52,6 +67,7 @@
                 </td>
               </tr>
           </form>
+          {% endif %}
         </table>
     </div>
 

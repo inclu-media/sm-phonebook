@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 from models import PhoneBookEntry
+from google.appengine.api import users
 import os
 import jinja2
 import webapp2
@@ -30,8 +31,16 @@ class BaseHandler(webapp2.RequestHandler):
 
 class ListHandler(BaseHandler):
     def get(self):
+        user = users.get_current_user()
+        if user:
+            logged_in = True
+            log_url = users.create_logout_url('/')
+        else:
+            logged_in = False
+            log_url = users.create_login_url('/')
+
         entries = PhoneBookEntry.query().fetch()
-        params = {"entries": entries}
+        params = {"entries": entries, "logged_in": logged_in, "log_url": log_url, "user": user}
         return self.render_template("phonebook.html", params=params)
 
     def post(self):
@@ -47,12 +56,56 @@ class ListHandler(BaseHandler):
         I'll therefore add it manually to the list of entries
         before displaying them.
         '''
+        user = users.get_current_user()
+        log_url = users.create_logout_url('/')
         entries.insert(0, entry)
-        params = {"entries": entries}
+        params = {"entries": entries, "logged_in": True, "user": user, "log_url": log_url}
+
+        return self.render_template("phonebook.html", params=params)
+
+
+class DeleteHandler(BaseHandler):
+    def post(self, m_id):
+        entry = PhoneBookEntry.get_by_id(int(m_id))
+        entry.key.delete()
+
+        user = users.get_current_user()
+        log_url = users.create_logout_url('/')
+        entries = PhoneBookEntry.query().fetch()
+        params = {"entries": entries, "logged_in": True, "user": user, "log_url": log_url}
+
+        return self.render_template("phonebook.html", params=params)
+
+
+class EditHandler(BaseHandler):
+    def post(self, m_id):
+
+        user = users.get_current_user()
+        log_url = users.create_logout_url('/')
+        entries = PhoneBookEntry.query().fetch()
+        params = {"entries": entries, "edit_id": int(m_id), "logged_in": True, "user": user, "log_url": log_url}
+
+        return self.render_template("phonebook.html", params=params)
+
+
+class SaveHandler(BaseHandler):
+    def post(self, m_id):
+        entry = PhoneBookEntry.get_by_id(int(m_id))
+        entry.name = self.request.get("name")
+        entry.phone = self.request.get("phone")
+        entry.put()
+
+        user = users.get_current_user()
+        log_url = users.create_logout_url('/')
+        entries = PhoneBookEntry.query().fetch()
+        params = {"entries": entries, "logged_in": True, "user": user, "log_url": log_url}
 
         return self.render_template("phonebook.html", params=params)
 
 
 app = webapp2.WSGIApplication([
     webapp2.Route('/', ListHandler),
+    webapp2.Route('/<m_id:\d+>/del', DeleteHandler),
+    webapp2.Route('/<m_id:\d+>/edit', EditHandler),
+    webapp2.Route('/<m_id:\d+>/save', SaveHandler)
 ], debug=True)
